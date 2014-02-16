@@ -8,8 +8,8 @@ import android.util.Log;
 import com.throughawall.colorpicker.ColorChangeListener;
 import com.throughawall.colorpicker.ColorPickerFragment;
 import com.throughawall.colorpicker.ColorTask;
-import com.throughawall.colorpicker.GetColorRequest;
-import com.throughawall.colorpicker.SetColorRequest;
+import com.throughawall.colorpicker.GetColorTask;
+import com.throughawall.colorpicker.SetColorTask;
 
 import java.io.UnsupportedEncodingException;
 
@@ -20,6 +20,7 @@ public class ImpRemote extends Activity implements ColorChangeListener {
     private ColorTask mSetColorTask = null;
     private boolean mColorSet = false;
     private Integer mNextColor;
+    private String mImpId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,14 +32,15 @@ public class ImpRemote extends Activity implements ColorChangeListener {
 
         mColorPicker.setColorChangeListener(this);
 
-        ColorTask getTask = new ColorTask(this){
+        mImpId = getResources().getString(R.string.imp_id);
+
+        (new GetColorTask(mImpId, this){
             protected void onPostExecute(ColorResponse result){
                 if(!mColorSet && result.getStatus().equals("connected")){
                     mColorPicker.setColor(result.getColor());
                 }
             }
-        };
-        getTask.execute(new GetColorRequest(getResources().getString(R.string.imp_id)));
+        }).execute();
     }
 
     @Override
@@ -50,18 +52,18 @@ public class ImpRemote extends Activity implements ColorChangeListener {
 
     private void setNextColor(){
         if(mNextColor != null && (mSetColorTask == null || mSetColorTask.getStatus() == AsyncTask.Status.FINISHED)){
-            mSetColorTask = new ColorTask(this) {
-                @Override
-                protected void onPostExecute(ColorResponse result) {
-                    super.onPostExecute(result);
-                    mSetColorTask = null;
-                    setNextColor();
-                }
-            };
             try {
                 int nextColor = mNextColor;
                 mNextColor = null;
-                mSetColorTask.execute(new SetColorRequest(getResources().getString(R.string.imp_id), nextColor));
+                mSetColorTask = new SetColorTask(mImpId, nextColor, this) {
+                    @Override
+                    protected void onPostExecute(ColorResponse result) {
+                        super.onPostExecute(result);
+                        mSetColorTask = null;
+                        setNextColor();
+                    }
+                };
+                mSetColorTask.execute();
             } catch (UnsupportedEncodingException e) {
                 Log.e(TAG, e.toString());
             }

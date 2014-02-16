@@ -28,13 +28,15 @@ import java.io.IOException;
  */
 
 
-public class ColorTask extends AsyncTask<ColorRequest, Void, ColorTask.ColorResponse> {
-    private static final String TAG = "ImpRemote";
+public abstract class ColorTask extends AsyncTask<Void, Void, ColorTask.ColorResponse> {
+    protected static final String TAG = "ImpRemote";
+    protected static final String IMP_FORMAT = "https://agent.electricimp.com/%s/light";
+
     private final int CONNECTION_TIMEOUT = 4000;
     private final int SOCKET_TIMEOUT = 7000;
 
     protected Exception mError = null;
-    private Context mContext;
+    protected Context mContext;
 
     public ColorTask(Context context) {
         super();
@@ -42,7 +44,7 @@ public class ColorTask extends AsyncTask<ColorRequest, Void, ColorTask.ColorResp
     }
 
     @Override
-    protected ColorResponse doInBackground(ColorRequest... colorRequests) {
+    protected ColorResponse doInBackground(Void ..._) {
         HttpParams httpParams = new BasicHttpParams();
         HttpResponse response = null;
         HttpRequestBase request;
@@ -53,7 +55,7 @@ public class ColorTask extends AsyncTask<ColorRequest, Void, ColorTask.ColorResp
         HttpClient client = new DefaultHttpClient(httpParams);
 
         try {
-            request = colorRequests[0].getRequest();
+            request = getRequest();
             request.addHeader("Accept", "application/json");
 
             response = client.execute(request);
@@ -99,6 +101,8 @@ public class ColorTask extends AsyncTask<ColorRequest, Void, ColorTask.ColorResp
 
         }
     }
+
+    protected abstract HttpRequestBase getRequest();
 
     public static class ColorResponse {
         private String mStatus;

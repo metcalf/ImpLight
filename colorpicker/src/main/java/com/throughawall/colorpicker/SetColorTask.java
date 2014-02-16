@@ -1,11 +1,13 @@
 package com.throughawall.colorpicker;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.util.Log;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.UnsupportedEncodingException;
@@ -13,16 +15,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by andrew on 2/12/14.
+ * Created by andrew on 2/16/14.
  */
-public class SetColorRequest extends ColorRequest {
-    private static final String TAG = "ImpRemote";
+public class SetColorTask extends ColorTask {
+    HttpPost mRequest;
 
-    private HttpPost mRequest;
+    public SetColorTask(String impId, int color, int time, Context context) throws UnsupportedEncodingException{
+        super(context);
 
-    public SetColorRequest(String id, int color, int time) throws UnsupportedEncodingException {
-        mRequest = new HttpPost(String.format(IMP_FORMAT, id));
-
+        mRequest = new HttpPost(String.format(IMP_FORMAT, impId));
 
         List<NameValuePair> data = new ArrayList<NameValuePair>(4);
 
@@ -37,11 +38,12 @@ public class SetColorRequest extends ColorRequest {
         mRequest.setEntity(new UrlEncodedFormEntity(data, "utf-8"));
     }
 
-    public SetColorRequest(String id, int color) throws UnsupportedEncodingException {
-        this(id, color, 0);
+    public SetColorTask(String impId, int color, Context context) throws UnsupportedEncodingException{
+        this(impId, color, 0, context);
     }
 
-    public HttpPost getRequest() {
+    @Override
+    protected HttpRequestBase getRequest() {
         return mRequest;
     }
 }
