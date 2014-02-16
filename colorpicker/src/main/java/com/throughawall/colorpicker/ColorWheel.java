@@ -1,4 +1,4 @@
-package com.throughawall.implight;
+package com.throughawall.colorpicker;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -115,6 +115,10 @@ public class ColorWheel extends View implements ValueChangeListener {
     }
 
     public void setColor(int color){
+        setColor(color, false);
+    }
+
+    public void setColor(int color, boolean silent){
         if(color == 0){
             mPointerPosition[1] = -1;
         } else {
@@ -123,7 +127,7 @@ public class ColorWheel extends View implements ValueChangeListener {
 
             Color.colorToHSV(color, hsv);
 
-            mPointerPosition[0] = (float)Math.toRadians(hsv[0]);
+            mPointerPosition[0] = (float)-Math.toRadians(hsv[0]);
             mPointerPosition[1] = 0.8f * hsv[1] + 0.1f;
 
             Color.colorToHSV(getColor(), currHSV);
@@ -131,7 +135,9 @@ public class ColorWheel extends View implements ValueChangeListener {
                     (int)hsv[0], hsv[1], hsv[2], (int)currHSV[0], currHSV[1], currHSV[2]));
         }
 
-        colorChanged();
+        if(!silent){
+            colorChanged();
+        }
     }
 
     public int getColor(){
@@ -277,6 +283,4 @@ public class ColorWheel extends View implements ValueChangeListener {
 
         return mSampleBitmap.getPixel(x, y);
     }
-
-    ;
 }

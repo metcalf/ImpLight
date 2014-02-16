@@ -29,3 +29,5 @@ proguard/
 .idea/dataSources.xml
 .idea/sqlDataSources.xml
 .idea/dynamic.xml
+
+**/secrets.xml

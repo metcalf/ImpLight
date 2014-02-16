@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard dimens for the color wheel -->
+    <dimen name="color_wheel_wheel_margin">0dp</dimen>
+    <dimen name="color_wheel_wheel_border">4dp</dimen>
+    <dimen name="color_wheel_pointer_radius">5dp</dimen>
+    <dimen name="color_wheel_pointer_thickness">2dp</dimen>
+
+    <dimen name="value_bar_margin">4dp</dimen>
+
+</resources>

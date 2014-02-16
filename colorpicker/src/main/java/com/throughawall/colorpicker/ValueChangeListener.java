@@ -1,4 +1,4 @@
-package com.throughawall.implight;
+package com.throughawall.colorpicker;
 
 /**
  * Created by andrew on 2/1/14.

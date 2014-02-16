@@ -1,10 +1,8 @@
-package com.throughawall.implight;
+package com.throughawall.colorpicker;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ClipDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.SeekBar;
@@ -60,6 +58,16 @@ public class ValueBar extends SeekBar implements ColorChangeListener, SeekBar.On
 
         if(getProgress() == 0){
             color = mOffColor;
+        } else if (color == 0) {
+            getProgressDrawable().clearColorFilter();
+            getThumb().clearColorFilter();
+            return;
+        } else {
+            float[] hsv = new float[3];
+
+            Color.colorToHSV(color | 0xFF000000, hsv);
+            hsv[2] = 1;
+            color = Color.HSVToColor(hsv);
         }
 
         getProgressDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
@@ -69,6 +77,7 @@ public class ValueBar extends SeekBar implements ColorChangeListener, SeekBar.On
     @Override
     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
         float value = getValue();
+        Log.d(TAG, "Progress changed to " + value);
         for(ValueChangeListener listener : mListeners){
             listener.onValueChanged(value);
         }

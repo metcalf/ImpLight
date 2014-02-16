@@ -1,1 +1,1 @@
-include ':implight'
+include ':implight', ':colorpicker'

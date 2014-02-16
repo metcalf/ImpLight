@@ -1,13 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <declare-styleable name="ColorWheel">
-        <attr name="wheel_margin" format="dimension" />
-        <attr name="wheel_border" format="dimension" />
-        <attr name="pointer_radius" format="dimension" />
-        <attr name="pointer_thickness" format="dimension" />
-    </declare-styleable>
-
-    <declare-styleable name="ValueBar">
-        <attr name="bar_margin" format="dimension" />
-    </declare-styleable>
-</resources>
+<resources></resources>

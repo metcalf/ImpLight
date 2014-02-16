@@ -1,18 +1,24 @@
-package com.throughawall.implight;
+package com.throughawall.colorpicker;
 
 import android.app.Fragment;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.ArrayList;
+import com.throughawall.colorpicker.R;
+
+import java.lang.Override;import java.lang.String;import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by andrew on 2/2/14.
  */
 public class ColorPickerFragment extends Fragment implements ValueChangeListener, ColorChangeListener {
+    private final String TAG = "ImpRemote";
+
     private List<ColorChangeListener> mListeners = new ArrayList<ColorChangeListener>();
 
     ColorWheel mWheelView;
@@ -67,11 +73,13 @@ public class ColorPickerFragment extends Fragment implements ValueChangeListener
 
     @Override
     public void onValueChanged(float value) {
+        Log.d(TAG, "Picker value changed to: " + value);
         colorChanged();
     }
 
     @Override
     public void onColorChanged(int color) {
+        Log.d(TAG, "Picker color changed");
         colorChanged();
     }
 
@@ -84,6 +92,29 @@ public class ColorPickerFragment extends Fragment implements ValueChangeListener
     }
 
     public int getColor() {
-        return 0xFF000000 | (int) (mWheelView.getColor() * mBarView.getValue());
+        float[] hsv = new float[3];
+
+        Color.colorToHSV(mWheelView.getColor(), hsv);
+        hsv[2] = mBarView.getValue();
+
+        return Color.HSVToColor(hsv);
+    }
+
+    public void setColor(int color){
+        float[] hsv = new float[3];
+
+        Color.colorToHSV(color, hsv);
+
+        float oldValue = mBarView.getValue();
+        float value = hsv[2];
+        hsv[2] = 1.0f;
+        mWheelView.setColor(Color.HSVToColor(hsv), true);
+
+        mBarView.setValue(value);
+
+        // Hack to make sure the UI gets updated
+        if(oldValue == value){
+            mWheelView.setColor(Color.HSVToColor(hsv));
+        }
     }
 }
