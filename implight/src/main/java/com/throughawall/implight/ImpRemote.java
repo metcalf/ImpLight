@@ -33,6 +33,13 @@ public class ImpRemote extends Activity implements ColorChangeListener {
         mColorPicker.setColorChangeListener(this);
 
         mImpId = getResources().getString(R.string.imp_id);
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+
+        mColorSet = false;
 
         (new GetColorTask(mImpId, this){
             protected void onPostExecute(ColorResponse result){

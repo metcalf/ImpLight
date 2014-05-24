@@ -104,17 +104,20 @@ public class ColorPickerFragment extends Fragment implements ValueChangeListener
         float[] hsv = new float[3];
 
         Color.colorToHSV(color, hsv);
-
-        float oldValue = mBarView.getValue();
         float value = hsv[2];
+
         hsv[2] = 1.0f;
-        mWheelView.setColor(Color.HSVToColor(hsv), true);
+        int hsColor = Color.HSVToColor(hsv);
+
+        float oldProgress = mBarView.getProgress();
+
+        mWheelView.setColor(hsColor, true);
 
         mBarView.setValue(value);
 
         // Hack to make sure the UI gets updated
-        if(oldValue == value){
-            mWheelView.setColor(Color.HSVToColor(hsv));
+        if(oldProgress == mBarView.getProgress()){
+            mWheelView.setColor(hsColor);
         }
     }
 }
