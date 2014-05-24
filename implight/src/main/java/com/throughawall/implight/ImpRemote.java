@@ -15,6 +15,7 @@ import java.io.UnsupportedEncodingException;
 
 public class ImpRemote extends Activity implements ColorChangeListener {
     private static final String TAG = "ImpRemote";
+    private static final int DIM_TIME = 100;
 
     private ColorPickerFragment mColorPicker;
     private ColorTask mSetColorTask = null;
@@ -62,7 +63,7 @@ public class ImpRemote extends Activity implements ColorChangeListener {
             try {
                 int nextColor = mNextColor;
                 mNextColor = null;
-                mSetColorTask = new SetColorTask(mImpId, nextColor, this) {
+                mSetColorTask = new SetColorTask(mImpId, nextColor, DIM_TIME, this) {
                     @Override
                     protected void onPostExecute(ColorResponse result) {
                         super.onPostExecute(result);
