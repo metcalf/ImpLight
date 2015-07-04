@@ -11,8 +11,8 @@ lastOnLevels <- null;
 
 startLevels <- [0.0, 0.0, 0.0];
 targetLevels <- [0.0, 0.0, 0.0];
-dimEndTime <- 0.0;
-dimStartTime <- 0.0;
+dimEndTime <- 0;
+dimStartTime <- 0;
 lastReport <- null;
 timer <- null;
 currDiy <- null;
@@ -71,10 +71,10 @@ irRx <- hardware.pin2;
 /*
  * Generic Class to learn IR Remote Control Codes
  * Useful for:
- *              - TV Remotes
- *              - Air conditioner / heater units
- *              - Fans / remote-control light fixtures
- *              - Other things not yet attempted!
+ * 		- TV Remotes
+ *		- Air conditioner / heater units
+ * 		- Fans / remote-control light fixtures
+ *		- Other things not yet attempted!
  *
  * For more information on Differential Pulse Position Modulation, see
  * http://learn.adafruit.com/ir-sensor
@@ -83,161 +83,161 @@ irRx <- hardware.pin2;
 class IR_receiver {
     /* Note that the receive loops runs at about 160 us per iteration */
 
-        /* Receiver Thresholds in us. Inter-pulse times < THRESH_0 are zeros,
-         * while times > THRESH_0 but < THRESH_1 are ones, and times > THRESH_1
-         * are either the end of a pulse train or the start pulse at the beginning of a code */
-        THRESH_0                                        = 1000;  // us (~5 iterations)
-        THRESH_1                                        = 2000; // us (~11 iterations)
+	/* Receiver Thresholds in us. Inter-pulse times < THRESH_0 are zeros,
+	 * while times > THRESH_0 but < THRESH_1 are ones, and times > THRESH_1
+	 * are either the end of a pulse train or the start pulse at the beginning of a code */
+	THRESH_0					= 1000;  // us (~5 iterations)
+	THRESH_1					= 2000; // us (~11 iterations)
 
-        /* IR Receive Timeouts
-         * IR_RX_DONE is the max time to wait after a pulse before determining that the
-         * pulse train is complete and stopping the reciever. */
-        IR_RX_DONE                                      = 12000; // us
+	/* IR Receive Timeouts
+	 * IR_RX_DONE is the max time to wait after a pulse before determining that the
+	 * pulse train is complete and stopping the reciever. */
+	IR_RX_DONE					= 12000; // us
 
-        /* The receiver is disabled between codes to prevent firing the callback multiple times (as
-         * most remotes send the code multiple times per button press). IR_RX_DISABLE determines how
-         * long the receiver is disabled after successfully receiving a code. */
-        IR_RX_DISABLE                           = 0.2000; // seconds
+	/* The receiver is disabled between codes to prevent firing the callback multiple times (as
+	 * most remotes send the code multiple times per button press). IR_RX_DISABLE determines how
+	 * long the receiver is disabled after successfully receiving a code. */
+	IR_RX_DISABLE				= 0.2500; // seconds
 
-        /* The Vishay TSOP6238TT IR Receiver IC is active-low, while a simple IR detector circuit with a
-         * IR Phototransistor and resistor will be active-high. */
-        IR_IDLE_STATE                           = 1;
+	/* The Vishay TSOP6238TT IR Receiver IC is active-low, while a simple IR detector circuit with a
+	 * IR Phototransistor and resistor will be active-high. */
+	IR_IDLE_STATE				= 1;
 
-        rx_pin = null;
+	rx_pin = null;
 
-        /* Callback to trigger on receive */
-        callback = null;
+	/* Callback to trigger on receive */
+	callback = null;
 
-        /*
-         * Receive a new IR Code on the input pin.
-         *
-         * This function is configured as a state-change callback on the receive pin in the constructor,
-         * so it must be defined before the constructor.
-         */
-        function receive() {
+	/*
+	 * Receive a new IR Code on the input pin.
+	 *
+	 * This function is configured as a state-change callback on the receive pin in the constructor,
+	 * so it must be defined before the constructor.
+	 */
+	function receive() {
 
-                // Code is stored as a string of 1's and 0's as the pulses are measured.
-                local newcode = array(256);
-                local index = 0;
+		// Code is stored as a string of 1's and 0's as the pulses are measured.
+		local newcode = array(256);
+		local index = 0;
 
         local state = 0; // dummy value; will be set again before being used
-                local last_state = rx_pin.read();
-                local duration = 0;
+		local last_state = rx_pin.read();
+		local duration = 0;
 
-                local start = hardware.micros();
-                local last_change_time = start;
-                local now = start;
+		local start = hardware.micros();
+		local last_change_time = start;
+		local now = start;
 
-                local times = array(256);
-                local timesIndex = 0;
+		local times = array(256);
+		local timesIndex = 0;
 
-                /*
-                 * This loop runs much faster with while(1) than with a timeout check in the while condition
-                 */
-                while (1) {
+		/*
+		 * This loop runs much faster with while(1) than with a timeout check in the while condition
+		 */
+		while (1) {
 
-                        /* determine if pin has changed state since last read
-                         * get a timestamp in case it has; we don't want to wait for code to execute before getting the
-                         * timestamp, as this will make the reading less accurate. */
-                        state = rx_pin.read();
-                        now = hardware.micros();
+			/* determine if pin has changed state since last read
+			 * get a timestamp in case it has; we don't want to wait for code to execute before getting the
+			 * timestamp, as this will make the reading less accurate. */
+			state = rx_pin.read();
+			now = hardware.micros();
 
-                        if (state == last_state) {
-                                // last state change was over IR_RX_DONE ago; we're done with code; quit.
-                                if ((now - last_change_time) > IR_RX_DONE) {
-                                        break;
-                                } else {
-                                        // no state change; go back to the top of the while loop and check again
-                                        continue;
-                                }
-                        }
+			if (state == last_state) {
+				// last state change was over IR_RX_DONE ago; we're done with code; quit.
+				if ((now - last_change_time) > IR_RX_DONE) {
+					break;
+				} else {
+					// no state change; go back to the top of the while loop and check again
+					continue;
+				}
+			}
 
-                        // check and see if the variable (low) portion of the pulse has just ended
-                        if (state != IR_IDLE_STATE) {
-                                // the low time just ended. Measure it and add to the code string
-                                duration = now - last_change_time;
+			// check and see if the variable (low) portion of the pulse has just ended
+			if (state != IR_IDLE_STATE) {
+				// the low time just ended. Measure it and add to the code string
+				duration = now - last_change_time;
 
-                                if (duration < THRESH_0) {
-                                        newcode[index++] = 0;
+				if (duration < THRESH_0) {
+					newcode[index++] = 0;
                     //times[timesIndex++] = duration;
-                                } else if (duration < THRESH_1) {
-                                        newcode[index++] = 1;
+				} else if (duration < THRESH_1) {
+					newcode[index++] = 1;
                     //times[timesIndex++] = duration;
-                                }
-                        }
+				}
+			}
 
-                        last_state = state;
-                        last_change_time = now;
+			last_state = state;
+			last_change_time = now;
 
-                        // if we're here, we're currently measuring the low time of a pulse
-                        // just wait for the next state change and we'll tally it up
-                }
+			// if we're here, we're currently measuring the low time of a pulse
+			// just wait for the next state change and we'll tally it up
+		}
 
         if(index == 0){
             return;
         }
 
-                // codes are sent multiple times, so disable the receiver briefly before re-enabling
-                disable();
-                imp.wakeup(IR_RX_DISABLE, enable.bindenv(this));
+		// codes are sent multiple times, so disable the receiver briefly before re-enabling
+		disable();
+		imp.wakeup(IR_RX_DISABLE, enable.bindenv(this));
 
-                callback(newcode, index);
-        }
+		callback(newcode, index);
+	}
 
-        /*
-         * Instantiate a new IR Code Reciever
-         *
-         * Input:
-         *              _rx_pin: (pin object) pin to listen to for codes.
-         *                      Requires a pin that supports state-change callbacks.
-         *              _rx_idle_state: (integer) 1 or 0. State of the RX Pin when idle (no code being transmitted).
-         *              _callback: (function) function to call when a code is received.
-         *
-         *              OPTIONAL:
-         *
-         *              _thresh_0: (integer) threshold in microseconds for a "0". Inter-pulse gaps shorter than this will
-         *                      result in a zero being received.
-         *              _thresh_1: (integer) threshold in microseconds for a "1". Inter-pulse gaps longer than THRESH_0 but
-         *                      shorter than THRESH_1 will result in a 1 being received. Gaps longer than THRESH_1 are ignored.
-         *              _ir_rx_done: (integer) time in microseconds to wait for the next pulse before determining that the end
-         *                      of a pulse train has been reached.
-         *          _ir_rx_disable: (integer) time in seconds to disable the receiver after successfully receiving a code.
-         */
-        constructor(_rx_pin, _rx_idle_state, _callback, _thresh_0 = null, _thresh_1 = null,
-                _ir_rx_done = null, _ir_rx_disable = null) {
-                this.rx_pin = _rx_pin;
-                rx_pin.configure(DIGITAL_IN, receive.bindenv(this));
+	/*
+	 * Instantiate a new IR Code Reciever
+	 *
+	 * Input:
+	 * 		_rx_pin: (pin object) pin to listen to for codes.
+	 *			Requires a pin that supports state-change callbacks.
+	 * 		_rx_idle_state: (integer) 1 or 0. State of the RX Pin when idle (no code being transmitted).
+	 * 		_callback: (function) function to call when a code is received.
+	 *
+	 * 		OPTIONAL:
+	 *
+	 * 		_thresh_0: (integer) threshold in microseconds for a "0". Inter-pulse gaps shorter than this will
+	 * 			result in a zero being received.
+	 *		_thresh_1: (integer) threshold in microseconds for a "1". Inter-pulse gaps longer than THRESH_0 but
+	 * 			shorter than THRESH_1 will result in a 1 being received. Gaps longer than THRESH_1 are ignored.
+	 *		_ir_rx_done: (integer) time in microseconds to wait for the next pulse before determining that the end
+	 * 			of a pulse train has been reached.
+	 * 	    _ir_rx_disable: (integer) time in seconds to disable the receiver after successfully receiving a code.
+	 */
+	constructor(_rx_pin, _rx_idle_state, _callback, _thresh_0 = null, _thresh_1 = null,
+		_ir_rx_done = null, _ir_rx_disable = null) {
+		this.rx_pin = _rx_pin;
+		rx_pin.configure(DIGITAL_IN, receive.bindenv(this));
 
-                IR_IDLE_STATE = _rx_idle_state;
+		IR_IDLE_STATE = _rx_idle_state;
 
-                callback = _callback;
+		callback = _callback;
 
-                /* If any of the timeouts were passed in as arguments, override the default value for that
-                 * timeout here. */
-                if (_thresh_0) {
-                        THRESH_0 = _thresh_0;
-                }
+		/* If any of the timeouts were passed in as arguments, override the default value for that
+		 * timeout here. */
+		if (_thresh_0) {
+			THRESH_0 = _thresh_0;
+		}
 
-                if (_thresh_1) {
-                        THRESH_1 = _thresh_1;
-                }
+		if (_thresh_1) {
+			THRESH_1 = _thresh_1;
+		}
 
-                if (_ir_rx_done) {
-                        IR_RX_DONE = _ir_rx_done;
-                }
+		if (_ir_rx_done) {
+			IR_RX_DONE = _ir_rx_done;
+		}
 
-                if (_ir_rx_disable) {
-                        IR_RX_DISABLE = _ir_rx_disable;
-                }
-        }
+		if (_ir_rx_disable) {
+			IR_RX_DISABLE = _ir_rx_disable;
+		}
+	}
 
-        function enable() {
-                rx_pin.configure(DIGITAL_IN, receive.bindenv(this));
-        }
+	function enable() {
+		rx_pin.configure(DIGITAL_IN, receive.bindenv(this));
+	}
 
-        function disable() {
-                rx_pin.configure(DIGITAL_IN);
-        }
+	function disable() {
+		rx_pin.configure(DIGITAL_IN);
+	}
 }
 
 
@@ -327,7 +327,7 @@ function setHsv(hue, sat, val){
 }
 
 function reportStatus(){
-    lastReport = clock();
+    lastReport = hardware.millis();
     agent.send("status", {
         "levels": currentLevels
     });
@@ -337,6 +337,11 @@ function setLevels(levels){
     local on = false;
 
     foreach(idx,level in levels){
+        if(level < 0 || level > 1){
+            server.log(format("Attempted to set invalid level %s: %.2f", ["R", "G", "B"][idx], level));
+            continue;
+        }
+
         leds[idx].write(math.pow(level, 2));
         currentLevels[idx] = level;
         on = on || level > 0
@@ -392,40 +397,68 @@ function loadDiy(idx){
 function doDim(){
     local current;
     local newLevels = [];
-    local currTime = clock();
+    local currTime = hardware.millis();
+    local maxDiff = 0.0;
     local remaining = dimEndTime - currTime;
 
     if(remaining <= 0){
+        server.log("DEBUG: Dim is done");
         setLevels(targetLevels);
         reportStatus();
         return;
     }
 
-    local completed = 1 - (remaining / (dimEndTime - dimStartTime));
+    local completed = 1.0 - (remaining.tofloat() / (dimEndTime - dimStartTime).tofloat());
+    if (completed < 0){
+        server.log("DEBUG: Completed is <0! " + completed);
+        reportStatus();
+        return;
+    }
 
     foreach(idx,target in targetLevels){
         local start = startLevels[idx];
 
-        newLevels.push(start + (target - start) * completed);
+        // Find the maximum difference, so we can stop if we're basically there already
+        local curr = currentLevels[idx];
+        local diff = math.fabs(curr - target);
+
+        maxDiff = maxDiff > diff ? maxDiff : diff
+
+        newLevels.push(start + ((target - start) * completed));
     }
 
     setLevels(newLevels);
-    timer = imp.wakeup((dimEndTime - dimStartTime) / DIM_STEPS, doDim);
 
+    // If we're basically set, just return
+    if (maxDiff < 0.005){
+        server.log(format("DEBUG: Dim is close enough start: %d end: %d now: %d",
+            dimStartTime, dimEndTime, currTime));
+        setLevels(targetLevels);
+        reportStatus();
+        return;
+    }
+
+    timer = imp.wakeup(((dimEndTime - dimStartTime) / DIM_STEPS).tofloat() / 1000, doDim);
     // Avoid reporting all the time -- kills timer consistency
-    if(lastReport == null || (currTime - lastReport) > REPORT_INTERVAL){
+    if(lastReport == null || math.abs(currTime - lastReport) > REPORT_INTERVAL){
         reportStatus();
     }
 }
 
 function startDim(time, levels){
-    dimStartTime = clock();
-    dimEndTime = dimStartTime + time;
+    dimStartTime = hardware.millis();
+    dimEndTime = dimStartTime + (time * 1000).tointeger();
 
     targetLevels = clone levels;
     startLevels = clone currentLevels;
 
     doDim();
+}
+
+function cancelDim(){
+    if(timer != null){
+        imp.cancelwakeup(timer);
+    }
 }
 
 
@@ -435,14 +468,16 @@ foreach(_,led in leds){
 
 function codeError(code, len, msg){
     local result = "";
-        for (local i = 0; i < len; i++) {
-                result += format("%d",code[i]);
-        }
+	for (local i = 0; i < len; i++) {
+		result += format("%d",code[i]);
+	}
 
-        server.log(format("Received %d-bit code with %s: %s", len, msg, result))
+	server.log(format("Received %d-bit code with %s: %s", len, msg, result))
 }
 
 function executeCode(code){
+    cancelDim();
+
     local spec = irCodes[code];
     switch(spec.type){
         case "color":
@@ -514,21 +549,35 @@ function onCode(code, len){
     executeCode(key);
 }
 
-IR_receiver(irRx, 1, onCode);
-
-agent.on("set", function(data){
-    if(timer != null){
-        imp.cancelwakeup(timer);
+function startup()
+{
+    server.log("Device starting");
+    if ("getsoftwareversion" in imp)
+    {
+        server.log("Device firmware version: " + imp.getsoftwareversion());
+    }
+    else
+    {
+        server.log("Sorry - my firmware doesn't include imp.getsoftwareversion() yet.");
     }
 
-    if(data.time <= 0){
-        setLevels(data.levels);
-        reportStatus();
-    } else {
-        startDim(data.time, data.levels);
-    }
-});
+    IR_receiver(irRx, 1, onCode);
 
-agent.on("code", function(code){
-    executeCode(code);
-});
+    agent.on("set", function(data){
+        cancelDim();
+
+        if(data.time <= 0){
+            setLevels(data.levels);
+            reportStatus();
+        } else {
+            startDim(data.time, data.levels);
+        }
+    });
+
+    agent.on("code", function(code){
+        executeCode(code);
+    })
+
+}
+
+startup();
